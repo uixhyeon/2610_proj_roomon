@@ -1,0 +1,3 @@
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync} from 'node:fs';
+export function database(path=':memory:'){const d=new DatabaseSync(path);try{d.exec(readFileSync(new URL('../drizzle/0000_reservations.sql',import.meta.url),'utf8'))}catch(e){if(!e.message.includes('already exists'))throw e}return {prepare(sql){let params=[];const q={bind(...p){params=p;return q},async all(){return {results:d.prepare(sql).all(...params)}},async first(){return d.prepare(sql).get(...params)||null},async run(){return {meta:d.prepare(sql).run(...params)}}};return q},async batch(q){d.exec('BEGIN');try{const r=[];for(const s of q)r.push(await s.run());d.exec('COMMIT');return r}catch(e){d.exec('ROLLBACK');throw e}}}}
